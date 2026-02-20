@@ -11,8 +11,18 @@ interface UpdatePatientModalProps {
     isSubmitting?: boolean;
 }
 
+interface InternalUpdatePatientPayload {
+    firstName: string;
+    lastName: string;
+    age: number;
+    gender: string;
+    phone: string;
+    email: string;
+    lastVisitDate: string | null;
+}
+
 export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmitting = false }: UpdatePatientModalProps) => {
-    const [formData, setFormData] = useState<UpdatePatientPayload>({
+    const [formData, setFormData] = useState<InternalUpdatePatientPayload>({
         firstName: patient?.firstName || '',
         lastName: patient?.lastName || '',
         age: patient?.age || 0,
