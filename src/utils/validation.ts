@@ -11,7 +11,9 @@ export const validatePhone = (phone: string): boolean => {
 
 export const isFutureDate = (dateString: string): boolean => {
     if (!dateString) return false;
-    const date = new Date(dateString);
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    date.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return date > today;
