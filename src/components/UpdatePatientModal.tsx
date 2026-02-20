@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import type { Patient, UpdatePatientPayload } from '../types/patient';
+import { validateEmail, validatePhone, isFutureDate } from '../utils/validation';
 
 interface UpdatePatientModalProps {
     isOpen: boolean;
@@ -21,9 +22,48 @@ export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmi
         lastVisitDate: patient?.lastVisitDate || null,
     });
 
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    const validateForm = (): boolean => {
+        const newErrors: { [key: string]: string } = {};
+
+        if (!formData.firstName.trim()) {
+            newErrors.firstName = 'First name is required';
+        } else if (!/^[a-zA-Z\s]+$/.test(formData.firstName)) {
+            newErrors.firstName = 'First name should only contain letters';
+        }
+
+        if (!formData.lastName.trim()) {
+            newErrors.lastName = 'Last name is required';
+        } else if (!/^[a-zA-Z\s]+$/.test(formData.lastName)) {
+            newErrors.lastName = 'Last name should only contain letters';
+        }
+
+        if (formData.email && !validateEmail(formData.email)) {
+            newErrors.email = 'Invalid email format';
+        }
+
+        if (!formData.phone.trim()) {
+            newErrors.phone = 'Phone number is required';
+        } else if (!validatePhone(formData.phone)) {
+            newErrors.phone = 'Phone number must be at least 10 digits';
+        }
+
+        if (formData.lastVisitDate && isFutureDate(formData.lastVisitDate)) {
+            newErrors.lastVisitDate = 'Last visit date cannot be in the future';
+        }
+
+        if (formData.age < 0 || formData.age > 150) {
+            newErrors.age = 'Age must be between 0 and 150';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
-        if (patient) {
+        if (validateForm() && patient) {
             onSubmit(patient.id, formData);
         }
     };
@@ -37,6 +77,7 @@ export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmi
     };
 
     const handleClose = () => {
+        setErrors({});
         onClose();
     };
 
@@ -80,10 +121,12 @@ export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmi
                                 name="firstName"
                                 value={formData.firstName}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.firstName ? 'border-red-500' : 'border-gray-300'
+                                    }`}
                                 required
                                 disabled={isSubmitting}
                             />
+                            {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName}</p>}
                         </div>
 
                         {/* Last Name */}
@@ -97,10 +140,12 @@ export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmi
                                 name="lastName"
                                 value={formData.lastName}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.lastName ? 'border-red-500' : 'border-gray-300'
+                                    }`}
                                 required
                                 disabled={isSubmitting}
                             />
+                            {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName}</p>}
                         </div>
 
                         {/* Age and Gender */}
@@ -117,10 +162,12 @@ export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmi
                                     onChange={handleChange}
                                     min="0"
                                     max="150"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.age ? 'border-red-500' : 'border-gray-300'
+                                        }`}
                                     required
                                     disabled={isSubmitting}
                                 />
+                                {errors.age && <p className="mt-1 text-xs text-red-500">{errors.age}</p>}
                             </div>
 
                             <div>
@@ -154,10 +201,13 @@ export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmi
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.phone ? 'border-red-500' : 'border-gray-300'
+                                    }`}
                                 required
                                 disabled={isSubmitting}
+                                placeholder="e.g. 1234567890"
                             />
+                            {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
                         </div>
 
                         {/* Email */}
@@ -171,10 +221,12 @@ export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmi
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.email ? 'border-red-500' : 'border-gray-300'
+                                    }`}
                                 required
                                 disabled={isSubmitting}
                             />
+                            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
                         </div>
 
                         {/* Last Visit Date */}
@@ -188,9 +240,11 @@ export const UpdatePatientModal = ({ isOpen, onClose, onSubmit, patient, isSubmi
                                 name="lastVisitDate"
                                 value={formData.lastVisitDate ? new Date(formData.lastVisitDate).toISOString().split('T')[0] : ''}
                                 onChange={handleChange}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.lastVisitDate ? 'border-red-500' : 'border-gray-300'
+                                    }`}
                                 disabled={isSubmitting}
                             />
+                            {errors.lastVisitDate && <p className="mt-1 text-xs text-red-500">{errors.lastVisitDate}</p>}
                         </div>
 
                         {/* Buttons */}
